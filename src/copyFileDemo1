@@ -1,0 +1,67 @@
+
+After this loop ends, if count is less than or equal to maxIterations, we can say that (a,b)
+is definitely not in the Mandelbrot set. If count is greater than maxIterations, then (a,b)CHAPTER 13. GUI PROGRAMMING CONTINUED
+714
+might or might not be in the Mandelbrot set, but the larger maxIterations is, the more likely
+that (a,b) is actually in the set.
+To make a picture from this procedure, use a rectangular grid of pixels to represent some
+rectangle in the plane. Each pixel corresponds to some real number coordinates (a,b). (Use
+the coordinates of the center of the pixel.) Run the above loop for each pixel. If the count goes
+past maxIterations, color the pixel black; this is a point that is possibly in the Mandelbrot
+set. Otherwise, base the color of the pixel on the value of count after the loop ends, using
+different colors for different counts. In some sense, the higher the count, the closer the point
+is to the Mandelbrot set, so the colors give some information about points outside the set and
+about the shape of the set. However, it’s important to understand that the colors are arbitrary
+and that colored points are definitely not in the set. Here is a screenshot from the Mandelbrot
+Viewer program that uses this computation. The black region is the Mandelbrot set (except
+that not all black points are known to be definitely in the set):
+When you use the program, you can “zoom in” on small regions of the plane. To do so, just
+click-and-drag the mouse on the image. This will draw a rectangular “zoom box” around part
+of the image, as shown in the illustration. When you release the mouse, the part of the picture
+inside the rectangle will be zoomed to fill the entire display. If you simply click a point in the
+picture, you will zoom in on the point where you click by a magnification factor of two. (Shift-
+click or use the right mouse button to zoom out instead of zooming in.) The interesting points
+are along the boundary of the Mandelbrot set. In fact, the boundary is infinitely complex.
+(Note that if you zoom in too far, you will exceed the capabilities of the double data type;
+nothing is done in the program to prevent this. The image will first become “blocky” and then
+meaningless.)
+You can use the “MaxIterations” menu to increase the maximum number of iterations in
+the loop. Remember that black pixels might or might not be in the set; when you increase
+“MaxIterations,” you might find that a black region becomes filled with color. The “Palette”
+menu determines the set of colors that are used. Different palettes give very different visual-
+izations of the set, but it’s just the arbitrary colors that are different. The “PaletteLength”CHAPTER 13. GUI PROGRAMMING CONTINUED
+715
+menu determines how many different colors are used. In the default setting, a different color is
+used for each possible value of count in the algorithm. Sometimes, you can get a much better
+picture by using a different number of colors. If the palette length is less than maxIterations,
+the palette is repeated to cover all the possible values of count; if the palette length is greater
+than maxIterations, only part of of the palette will be used. (If the picture is of an almost
+uniform color, try decreasing the palette length, since that makes the color vary more quickly
+as count changes. If you see what look like randomly colored dots instead of bands of color,
+try increasing the palette length.)
+The program has a “File” menu that can be used to save the picture as a PNG image file.
+You can also save a “param” file which simply saves the settings that produced the current
+picture. A param file can be read back into the program using the “Open” command.
+The Mandelbrot set is named after Benoit Mandelbrot, who was the first person to note the
+incredible complexity of the set. It is astonishing that such complexity and beauty can arise
+out of such a simple algorithm.
+13.5.2
+Design of the Program
+Most classes in Java are defined in packages. While we have used standard packages such
+as javafx.scene.control and java.io extensively, almost all of my programming examples
+have been in the “default package,” which means that they are not declared to belong to any
+named package. However, when doing more serious programming, it is good style to create
+a package to hold the classes for your program. The Oracle corporation recommends that
+package names should be based on an Internet domain name of the organization that produces
+the package. My office computer has domain name eck.hws.edu, and no other computer in
+the world should have the same name. According to Oracle, this allows me to use the package
+name edu.hws.eck, with the elements of the domain name in reverse order. I can also use
+sub-packages of this package, such as edu.hws.eck.mdbfx, which is the package name that I
+decided to use for my Mandelbrot Viewer application. No one else—or at least no one else who
+uses the same naming convention—will ever use the same package name, so this package name
+uniquely identifies my program.
+I briefly discussed using packages in Subsection 2.6.7 and in the context of the programming
+examples in Section 12.5. Here’s what you need to know for the Mandelbrot Viewer program:
+The program is defined in seven Java source code files. They can be found in the directory
+edu/hws/eck/mdbfx inside the source directory of the web site. (That is, they are in a directory
+named mdbfx, which is inside a directory named eck, which is inside hws, which is inside edu.
