@@ -1,8 +1,8 @@
-/**
+package Files; /**
  * The TextReader class provides methods for reading data expressed in human - readable character format.
  * A TextReader can be used as a wrapper for any Reader or InputStream to enable easy character-based input.
  *
- * Note that all of the input methods in this class throw errors of type IOException. An IOException can occur
+ * Note that all the input methods in this class throw errors of type IOException. An IOException can occur
  * when an attempt is made to read data from the input source. An error cann occur if an attempt is made to read
  * past the end of the input source; the exception in this case is of type TextReader.EndOfStreamError,
  * which is a subclass of IOException. An error can also occur if an attempt is made to read data of a particular
