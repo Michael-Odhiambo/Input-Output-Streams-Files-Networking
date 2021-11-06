@@ -323,7 +323,26 @@ public class SimplePaintWithXML extends Application {
         writeElement( out, "<Simplepaint version = \"1.0\">", 4 );
         writeElement( out, String.format( "<background red = '" + currentBackgroundColor.getRed() + "' green = '" +
                 currentBackgroundColor.getGreen() + "' blue = '" + currentBackgroundColor.getBlue() + "'/>" ), 8 );
+        writeCurves( out );
+        writeElement( out, "</simplepaint>", 4 );
 
+    }
+
+    private void writeCurves( PrintWriter out ) {
+        for ( CurveData curve : curves ) {
+            writeElement( out, String.format( "<Curve>"), 12 );
+            writeElement( out, String.format( "<color red='" + curve.getColor().getRed() + "' green='" +
+                    curve.getColor().getGreen() + "' blue='" + curve.getColor().getBlue() + "'/>"), 16 );
+            writeElement( out, String.format( "<symmetric>" + curve.isSymmetric() + "</symmetric>" ), 20 );
+            writePoints( out, curve );
+            writeElement( out, String.format( "<Curve/>" ), 12 );
+        }
+    }
+
+    private void writePoints( PrintWriter out, CurveData curve ) {
+        for ( Point2D point : curve.getPoints() ) {
+            writeElement( out, String.format( "<point x='" + point.getX() + "' y='" + point.getY() + "'/>"), 24 );
+        }
     }
 
     private void writeElement( PrintWriter out, String element, int indentationLevel ) {
