@@ -7,6 +7,7 @@ package Files;
 
 import javafx.application.Application;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.FileChooser;
 import javafx.scene.Scene;
@@ -17,6 +18,7 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.input.MouseEvent;
 import javafx.geometry.Point2D;
+import javafx.embed.swing.SwingFXUtils;
 
 import org.w3c.dom.*;
 import java.util.ArrayList;
@@ -24,6 +26,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import java.io.*;
+import java.awt.image.BufferedImage;
+import javax.imageio.ImageIO;
 
 
 public class SimplePaintWithXML extends Application {
@@ -60,6 +64,10 @@ public class SimplePaintWithXML extends Application {
     Document xmlRepresentationOfFileBeingOpened;
     private ArrayList<CurveData> curves = new ArrayList<>();
 
+    private String defaultNameOfFileBeingSaved = "filename";
+    private String defaultNameOfImageBeingSaved = "image.png";
+
+    private boolean imageIsBeingSaved = false;
 
     /**
      * These variables are used to hold the background color and curves when a new file
@@ -168,7 +176,7 @@ public class SimplePaintWithXML extends Application {
 
     private MenuItem createSavePNGImageMenuItem() {
         MenuItem savePNGImage = new MenuItem( "Save PNG Image" );
-        //savePNGImage.setOnAction( event -> saveDrawingAsPNGFile() );
+        savePNGImage.setOnAction( event -> saveDrawingAsPNGFile() );
         return savePNGImage;
     }
 
@@ -314,14 +322,20 @@ public class SimplePaintWithXML extends Application {
 
     private void fileIsBeingEdited( FileChooser fileDialog ) {
         // Get the file name and directory for the dialog from the file that is being edited.
-        fileDialog.setInitialFileName( fileBeingEdited.getName() );
+        if ( imageIsBeingSaved )
+            fileDialog.setInitialFileName( String.format( "%s.png", fileBeingEdited.getName() ));
+        else
+            fileDialog.setInitialFileName( fileBeingEdited.getName() );
         fileDialog.setInitialDirectory( fileBeingEdited.getParentFile() );
     }
 
     private void noFileIsBeingEdited( FileChooser fileDialog ) {
         // No file is being edited. So set the file name in the dialog to "filename.xml" and set the
         // directory in the dialog to the user's home directory.
-        fileDialog.setInitialFileName( "filename.txt" );
+        if ( imageIsBeingSaved )
+            fileDialog.setInitialFileName( defaultNameOfImageBeingSaved );
+        else
+            fileDialog.setInitialFileName( defaultNameOfFileBeingSaved );
         fileDialog.setInitialDirectory( new File( System.getProperty( "user.home" ) ) );
     }
 
@@ -378,6 +392,8 @@ public class SimplePaintWithXML extends Application {
 
 
     private void openFileWhileCheckingErrors( File selectedFile ) {
+        if ( selectedFile == null )
+            return;  // User has not selected a file.
         try {
             openFile( selectedFile );
             drawSelectedFile();
@@ -528,7 +544,54 @@ public class SimplePaintWithXML extends Application {
     }
 
 
-    //-----------------------------------------------------------------------------------------------
+    // ----------------------------------------------------------------------------------------------
+    private void saveDrawingAsPNGFile() {
+        drawingIsBeingSavedAsImage();
+        FileChooser fileDialog = initializeFileDialog( "Select the file to be saved." );
+        File selectedFile = fileDialog.showSaveDialog( mainWindow );
+        saveImageToFile( selectedFile );
+
+
+
+    }
+
+    private void saveImageToFile( File selectedFile ) {
+        try {
+            if ( selectedFile == null )
+                return;  // The user has not selected a file i.e. user has cancelled.
+            saveImageToSelectedFile( selectedFile );
+            imageIsDoneSaving();
+        }
+        catch ( Exception e ) {
+            Alert errorAlert = new Alert( Alert.AlertType.ERROR, "Sorry, but an error occurred\n" +
+                    "while trying to save the image.\n" + e.getMessage() );
+            errorAlert.showAndWait();
+            return;
+        }
+    }
+
+
+    private void saveImageToSelectedFile( File selectedFile ) throws Exception {
+        try {
+            Image canvasImage = canvas.snapshot( null, null );
+            BufferedImage image = SwingFXUtils.fromFXImage( canvasImage, null );
+            boolean hasPNG = ImageIO.write( image, "PNG", selectedFile );
+            if ( !hasPNG )
+                throw new Exception( "PNG format not available." );
+        }
+        catch ( Exception e ) {
+            throw e;
+        }
+    }
+
+    private void drawingIsBeingSavedAsImage() {
+        imageIsBeingSaved = true;
+    }
+
+    private void imageIsDoneSaving() {
+        imageIsBeingSaved = false;
+    }
+    // ----------------------------------------------------------------------------------------------
 
 
 
