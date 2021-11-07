@@ -17,7 +17,11 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.input.MouseEvent;
 import javafx.geometry.Point2D;
+
+import org.w3c.dom.*;
 import java.util.ArrayList;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import java.io.*;
 
@@ -30,7 +34,7 @@ public class SimplePaintWithXML extends Application {
     BorderPane root;  // The root holds all the elements in this program.
     Scene scene;      // The scene holds the root.
 
-    private final double CANVAS_WIDTH = 650;
+    private final double CANVAS_WIDTH = 750;
     private final double CANVAS_HEIGHT = 650;
 
     private Color[] availableColors = { Color.BLACK, Color.WHITE, Color.RED, Color.GREEN, Color.BLUE, Color.CYAN,
@@ -52,10 +56,17 @@ public class SimplePaintWithXML extends Application {
     private String nameOfFileBeingEdited = "Untitled";
     private File fileBeingEdited = null;
 
-
-    
-
+    private PrintWriter streamToOutputFile;
+    Document xmlRepresentationOfFileBeingOpened;
     private ArrayList<CurveData> curves = new ArrayList<>();
+
+
+    /**
+     * These variables are used to hold the background color and curves when a new file
+     * is being opened.
+     */
+    private Color newBackgroundColor;
+    private ArrayList<CurveData> newCurves = new ArrayList<>();
 
     public static void main( String[] args ) {
         launch( args );
@@ -63,7 +74,6 @@ public class SimplePaintWithXML extends Application {
 
     public void start( Stage stage ) {
         setUpMainWindow( stage );
-
     }
 
     private void setUpMainWindow( Stage stage ) {
@@ -75,29 +85,24 @@ public class SimplePaintWithXML extends Application {
     private void setUpMenuAndScene() {
         root.setTop( createMenuBar() );
         setUpScene();
-
     }
 
     private MenuBar createMenuBar() {
         MenuBar menus = new MenuBar();
         menus.getMenus().addAll( createFileMenu(), createControlMenu(), createColorMenu(), createBackGroundColorMenu() );
         return menus;
-
     }
 
     private Menu createFileMenu() {
         Menu fileMenu = new Menu( "File" );
         createFileMenuItems( fileMenu );
         return fileMenu;
-
     }
 
     private Menu createControlMenu() {
         Menu controlMenu = new Menu( "Control" );
         createControlMenuItems( controlMenu );
         return controlMenu;
-
-
     }
 
     private Menu createColorMenu() {
@@ -157,7 +162,7 @@ public class SimplePaintWithXML extends Application {
 
     private MenuItem createOpenMenuItem() {
         MenuItem open = new MenuItem( "Open" );
-        //open.setOnAction( event -> openFile() );
+        open.setOnAction( event -> openXMLFileRepresentationOfTheImage() );
         return open;
     }
 
@@ -195,7 +200,6 @@ public class SimplePaintWithXML extends Application {
     private void respondToMousePressOnTheCanvas( MouseEvent event ) {
         if ( currentlyDrawing )
             return;  // Ignore this mouse button press since the user is drawing.
-
         primeVariablesForDrawing( event );
 
     }
@@ -244,32 +248,29 @@ public class SimplePaintWithXML extends Application {
         reInitializeKeyVariables();
 
     }
-    // --------------------------------------------------------------------------------------------------
+
 
     /**
      * Save the user's image to a file in human-readable text format.
      */
     private void saveImageAsXmlFile() {
-        FileChooser fileDialog = initializeFileDialog( false );
-        File selectedFile = fileDialog.showSaveDialog( mainWindow );
-
         try {
+            FileChooser fileDialog = initializeFileDialog( "Select the file to be saved" );
+            File selectedFile = fileDialog.showSaveDialog( mainWindow );
             saveFile( selectedFile );
         }
         catch ( IOException e ) {
             Alert errorAlert = new Alert( Alert.AlertType.ERROR, "Sorry, but an error occurred while\n" +
-                    "trying to save the file." );
+                    "trying to save the file." + e );
             errorAlert.showAndWait();
+            return;
         }
-
     }
 
-
-    private FileChooser initializeFileDialog( boolean isOpenFileDialog ) {
+    private FileChooser initializeFileDialog( String dialogTitle ) {
         FileChooser fileDialog = new FileChooser();
         initializeNameAndDirectoryOfTheFileDialog( fileDialog );
-        setFileDialogTitle( fileDialog, isOpenFileDialog );
-
+        setFileDialogTitle( fileDialog, dialogTitle );
         return fileDialog;
 
     }
@@ -281,6 +282,35 @@ public class SimplePaintWithXML extends Application {
         else
             fileIsBeingEdited( fileDialog );
     }
+
+
+    private void saveFile( File selectedFile ) throws IOException {
+        if ( selectedFile == null )
+            return;  // User did not select a file i.e. cancelled.
+        // At this point, the user has selected a file and if the file exists has confirmed that it is OK
+        // to erase the existing file.
+        streamToOutputFile = createStreamForWritingToFile( selectedFile );
+        writeImageContentToFile();
+        closeOutputStream();
+        setFileBeingEdited( selectedFile );
+    }
+
+
+    private void writeImageContentToFile() {
+        writeElement( streamToOutputFile, "<?xml version = \"1.0\"?>", 0 );
+        writeElement( streamToOutputFile, "<simplepaint version = \"1.0\">", 4 );
+        writeElement( streamToOutputFile, String.format( "<background red = '" + currentBackgroundColor.getRed() + "' green = '" +
+                currentBackgroundColor.getGreen() + "' blue = '" + currentBackgroundColor.getBlue() + "'/>" ), 8 );
+        writeCurves( streamToOutputFile );
+        writeElement( streamToOutputFile, "</simplepaint>", 4 );
+
+    }
+
+
+    private PrintWriter createStreamForWritingToFile ( File selectedFile ) throws IOException {
+        return new PrintWriter( new FileWriter( selectedFile ) );
+    }
+
 
     private void fileIsBeingEdited( FileChooser fileDialog ) {
         // Get the file name and directory for the dialog from the file that is being edited.
@@ -295,38 +325,10 @@ public class SimplePaintWithXML extends Application {
         fileDialog.setInitialDirectory( new File( System.getProperty( "user.home" ) ) );
     }
 
-    private void setFileDialogTitle( FileChooser fileDialog, boolean isOpenFileDialog ) {
-        if ( isOpenFileDialog )
-            fileDialog.setTitle( "Select file to be opened" );
-        else
-            fileDialog.setTitle( "Select file to be saved" );
+    private void setFileDialogTitle( FileChooser fileDialog, String fileDialogTitle ) {
+        fileDialog.setTitle( fileDialogTitle );
     }
 
-    private void saveFile( File selectedFile ) throws IOException {
-        if ( selectedFile == null )
-            return;  // User did not select a file i.e. cancelled.
-        // At this point, the user has selected a file and if the file exists has confirmed that it is OK
-        // to erase the existing file.
-        PrintWriter out = createStreamForWritingToFile( selectedFile );
-        writeImageContentToFile( out );
-        out.close();
-        fileBeingEdited = selectedFile;
-    }
-
-    private PrintWriter createStreamForWritingToFile ( File selectedFile ) throws IOException {
-        PrintWriter out = new PrintWriter( new FileWriter( selectedFile ) );
-        return out;
-    }
-
-    private void writeImageContentToFile( PrintWriter out ) {
-        writeElement( out, "<?xml version = \"1.0\"?>", 0 );
-        writeElement( out, "<Simplepaint version = \"1.0\">", 4 );
-        writeElement( out, String.format( "<background red = '" + currentBackgroundColor.getRed() + "' green = '" +
-                currentBackgroundColor.getGreen() + "' blue = '" + currentBackgroundColor.getBlue() + "'/>" ), 8 );
-        writeCurves( out );
-        writeElement( out, "</simplepaint>", 4 );
-
-    }
 
     private void writeCurves( PrintWriter out ) {
         for ( CurveData curve : curves ) {
@@ -335,7 +337,7 @@ public class SimplePaintWithXML extends Application {
                     curve.getColor().getGreen() + "' blue='" + curve.getColor().getBlue() + "'/>"), 16 );
             writeElement( out, String.format( "<symmetric>" + curve.isSymmetric() + "</symmetric>" ), 20 );
             writePoints( out, curve );
-            writeElement( out, String.format( "<Curve/>" ), 12 );
+            writeElement( out, String.format( "</Curve>" ), 12 );
         }
     }
 
@@ -352,7 +354,182 @@ public class SimplePaintWithXML extends Application {
         out.flush();
     }
 
+    private void closeOutputStream() {
+        streamToOutputFile.close();
+    }
+
+    private void setFileBeingEdited( File selectedFile ) {
+        fileBeingEdited = selectedFile;
+        mainWindow.setTitle( "Paint with XML: " + fileBeingEdited.getName() );
+    }
+
     //-----------------------------------------------------------------------------------------------
+
+    /**
+     * Read an image from a file into the drawing area. The format of the file must be the same as that used in the
+     * saveImageAsXMLFile() method.
+     */
+    private void openXMLFileRepresentationOfTheImage() {
+        FileChooser fileDialog = initializeFileDialog( "Select the file to be opened." );
+        File selectedFile = fileDialog.showOpenDialog( mainWindow );
+        openFileWhileCheckingErrors( selectedFile );
+
+    }
+
+
+    private void openFileWhileCheckingErrors( File selectedFile ) {
+        try {
+            openFile( selectedFile );
+            drawSelectedFile();
+        }
+        catch ( Exception e ) {
+            Alert errorAlert = new Alert( Alert.AlertType.ERROR, String.format("%s", e) );
+            errorAlert.showAndWait();
+            return;
+        }
+    }
+
+    private void drawSelectedFile() {
+        curves = newCurves;
+        currentBackgroundColor = newBackgroundColor;
+        redrawEntireImage();
+    }
+
+
+    private void openFile( File selectedFile ) throws Exception {
+        if ( selectedFile == null )
+            return;  // User did not select a file, i.e. cancelled.
+        xmlRepresentationOfFileBeingOpened = createTreeRepresentationOfTheXMLFile( selectedFile );
+        checkVersionOfTheFile( xmlRepresentationOfFileBeingOpened.getDocumentElement() );
+        processChildNodes( xmlRepresentationOfFileBeingOpened.getDocumentElement().getChildNodes() );
+        setFileBeingEdited( selectedFile );
+    }
+
+    private Document createTreeRepresentationOfTheXMLFile( File selectedFile ) throws Exception {
+        try {
+            Document xmlDocument;
+            DocumentBuilder docReader = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            xmlDocument = docReader.parse( selectedFile );
+            return xmlDocument;
+        }
+        catch ( Exception e ) {
+            throw e;
+        }
+    }
+
+    private void checkVersionOfTheFile( Element rootNodeOfTheXMLDocument ) throws Exception {
+        if ( !rootNodeOfTheXMLDocument.getNodeName().equals( "simplepaint" ) )
+            throw new Exception( "File is not a simple paint file." );
+        checkVersionNumber( rootNodeOfTheXMLDocument );
+    }
+
+
+    private void checkVersionNumber( Element rootNodeOfTheXMLDocument ) throws Exception {
+        try {
+            String version = rootNodeOfTheXMLDocument.getAttribute( "version" );
+            double versionNumber = Double.parseDouble( version );
+            if ( versionNumber > 1.0 )
+                throw new Exception( "File requires a newer version of Paint." );
+        }
+        catch ( Exception e ) {
+            throw e;
+        }
+    }
+
+    private void processChildNodes( NodeList childNodes ) throws Exception {
+        for ( int i = 0; i < childNodes.getLength(); i++ ) {
+            if ( childNodes.item(i) instanceof Element ) {
+                processElement( (Element) childNodes.item(i) );
+            }
+        }
+    }
+
+    private void processElement( Element elementToProcess ) throws Exception {
+        if ( elementToProcess.getTagName().equals( "background" ) ) {
+            newBackgroundColor = getNewBackgroundColor(elementToProcess);
+        }
+        else if ( elementToProcess.getTagName().equals( "Curve" ) ) {
+            newCurves.add( processCurve( elementToProcess ) );
+        }
+    }
+
+
+    private Color getNewBackgroundColor( Element backgroundColorElement ) throws Exception {
+        try {
+            double red = Double.parseDouble( backgroundColorElement.getAttribute( "red" ) );
+            double green = Double.parseDouble( backgroundColorElement.getAttribute( "green" ) );
+            double blue = Double.parseDouble( backgroundColorElement.getAttribute( "blue" ) );
+            return Color.color( red, green, blue );
+        }
+        catch ( Exception e ) {
+            throw new Exception(e);
+        }
+    }
+
+    private CurveData processCurve( Element theCurve ) throws Exception {
+        CurveData curve = createCurveAndInitializeKeyVariables();
+        NodeList curveNodes = theCurve.getChildNodes();
+        for ( int j = 0; j < curveNodes.getLength(); j++ ) {
+            if ( curveNodes.item(j) instanceof Element )
+                processCurveElement( curve, (Element) curveNodes.item(j) );
+        }
+        return curve;
+    }
+
+    private CurveData createCurveAndInitializeKeyVariables() {
+        CurveData curve = new CurveData();
+        curve.setColor( Color.BLACK );
+        return curve;
+    }
+
+    private void processCurveElement( CurveData curve, Element curveElement ) throws Exception {
+        if ( curveElement.getTagName().equals( "color" ) ) {
+            curve.setColor( getCurveColor( curveElement ) );
+        }
+        else if ( curveElement.getTagName().equals( "point" ) ) {
+            curve.addPoint( getCurvePoint( curveElement ) );
+        }
+        else if ( curveElement.getTagName().equals( "symmetric" ) ) {
+            curve.setSymmetricProperty( getCurveSymmetricProperty( curveElement ) );
+        }
+    }
+
+
+    private Color getCurveColor( Element curveElement ) throws Exception {
+        try {
+            double red = Double.parseDouble( curveElement.getAttribute( "red" ) );
+            double green = Double.parseDouble( curveElement.getAttribute( "green" ) );
+            double blue = Double.parseDouble( curveElement.getAttribute( "blue" ) );
+            return Color.color( red, green, blue );
+        }
+        catch ( Exception e ) {
+            throw new Exception( e );
+        }
+    }
+
+
+    private Point2D getCurvePoint( Element curveElement ) throws Exception {
+        try {
+            double x = Double.parseDouble( curveElement.getAttribute( "x" ) );
+            double y = Double.parseDouble( curveElement.getAttribute( "y" ) );
+            return new Point2D( x, y );
+        }
+        catch ( Exception e ) {
+            throw new Exception( e );
+        }
+    }
+
+
+    private boolean getCurveSymmetricProperty( Element curveElement ) {
+        String symmetric = curveElement.getTextContent();
+        if ( symmetric.equals( "true" ) )
+            return true;
+        return false;
+    }
+
+
+    //-----------------------------------------------------------------------------------------------
+
 
 
     private void reInitializeKeyVariables() {
@@ -361,23 +538,27 @@ public class SimplePaintWithXML extends Application {
         nameOfFileBeingEdited = "Untitled";
     }
 
+
     private void quit() {
         System.exit(1);
     }
+    
+    
     private void removeRecentlyDrawnCurve() {
         if ( curves.size() > 0 )
             curves.remove( curves.remove( curves.size() - 1 ) );
-
     }
+    
 
     private void emptyCurvesList() {
         curves = new ArrayList<>();
     }
 
+
     private void redrawCurve( CurveData curve ) {
         Point2D startingPoint = curve.getPoints().get(0);
-
         for ( int i = 1; i < curve.getPoints().size(); i++ ) {
+            drawingArea.setStroke( curve.getColor() );
             drawSegment( startingPoint, curve.getPoints().get(i) );
             startingPoint = curve.getPoints().get(i);
         }
@@ -393,7 +574,6 @@ public class SimplePaintWithXML extends Application {
 
     private void createColorGroup( Menu colorMenu, String menu ) {
         ToggleGroup colorGroup = new ToggleGroup();
-
         for ( int i = 0; i < colorNames.length; i++ ) {
             createColorRadioMenuItem( colorMenu, colorGroup, i, menu );
         }
@@ -401,9 +581,9 @@ public class SimplePaintWithXML extends Application {
     }
 
 
-    private void createColorRadioMenuItem( Menu colorMenu, ToggleGroup colorGroup, int specifiedIndexPosition,
+    private void createColorRadioMenuItem( Menu menuTheColorBelongs, ToggleGroup groupTheColorBelongs, int indexPositionOfTheColor,
                                            String menu ) {
-        createColor( colorMenu, colorGroup, specifiedIndexPosition, menu );
+        createColor( menuTheColorBelongs, groupTheColorBelongs, indexPositionOfTheColor, menu );
     }
 
 
@@ -423,21 +603,18 @@ public class SimplePaintWithXML extends Application {
     private void setAsDefaultSelectedColor( RadioMenuItem color, int specifiedIndexPosition, String menu ) {
         if ( menu.equals( colorMenu ) && specifiedIndexPosition == 0 )
             setSelectedBackgroundColor( color );
-
         else if ( menu.equals( backgroundMenu ) && specifiedIndexPosition == 1 )
             setSelectedDrawingColor( color );
-
     }
 
 
     private void setSelectedDrawingColor( RadioMenuItem color ) {
-        System.out.println( color.getUserData() );
         color.setSelected( true );
         currentBackgroundColor = availableColors[ (Integer) color.getUserData() ];
     }
+    
 
     private void setSelectedBackgroundColor( RadioMenuItem color ) {
-        System.out.println( color.getUserData() );
         color.setSelected( true );
         currentDrawingColor = availableColors[ (Integer) color.getUserData() ];
     }
@@ -453,7 +630,6 @@ public class SimplePaintWithXML extends Application {
                 }
                 else
                     currentDrawingColor = availableColors[ (Integer) newValue.getUserData() ];
-
             }
         } );
     }
@@ -466,6 +642,7 @@ public class SimplePaintWithXML extends Application {
         canvasHolder = new Pane( canvas );
         root = new BorderPane( canvasHolder );
     }
+    
 
     private void setUpEventListenersOnTheCanvas() {
         canvas.setOnMousePressed( event -> respondToMousePressOnTheCanvas( event ) );
@@ -492,6 +669,7 @@ public class SimplePaintWithXML extends Application {
         drawSegment ( previousPoint, currentPoint );
 
     }
+    
 
     private void drawSegment( Point2D from, Point2D to ) {
         drawingArea.strokeLine( from.getX(), from.getY(), to.getX(), to.getY() );
@@ -506,10 +684,12 @@ public class SimplePaintWithXML extends Application {
         currentCurve.addPoint( new Point2D( event.getX()+0.5, event.getY()+0.5 ) );
 
     }
+    
 
     private void setUpScene() {
         scene = new Scene( root );
     }
+    
 
     private void showMainWindow( Stage stage ) {
         mainWindow = stage;
@@ -518,7 +698,5 @@ public class SimplePaintWithXML extends Application {
         mainWindow.setTitle( "Paint with XML: " + nameOfFileBeingEdited );
         mainWindow.show();
     }
-
-
 
 }
