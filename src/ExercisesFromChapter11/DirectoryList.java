@@ -11,14 +11,24 @@ import java.io.*;
 
 public class DirectoryList {
 
-    private static Scanner streamToStandardOutput;
+    private static Scanner streamToStandardInput;
     private static String directoryName;
+    private static int numberOfFilesCounted = 0;
 
     public static void main( String[] args ) {
-        streamToStandardOutput = new Scanner( System.in );
-        System.out.print( "Enter directory path: " );
-        directoryName = streamToStandardOutput.nextLine().trim();
+        createStream();
+        getFileNameFromUser();
         printFilesInDirectory( new File( directoryName ) );
+    }
+
+    private static void createStream() {
+        streamToStandardInput = new Scanner( System.in );
+    }
+
+    private static String getFileNameFromUser() {
+        System.out.print( "Enter directory name: " );
+        directoryName = streamToStandardInput.nextLine().trim();
+        return directoryName;
     }
 
     private static void printFilesInDirectory( File directory ) {
@@ -35,15 +45,19 @@ public class DirectoryList {
             printFileName( directory );
             return;
         }
-        System.out.println( String.format( "Files in the directory %s : ", directory.getName() ) );
-        for ( int i = 0; i < directory.listFiles().length; i++ ) {
-            processDirectory( directory.listFiles()[i] );
-        }
+        processSubdirectory( directory );
+    }
 
+    private static void processSubdirectory( File subDirectory ) {
+        System.out.println( String.format( "Files in the directory %s : ", subDirectory.getName() ) );
+        for ( int i = 0; i < subDirectory.listFiles().length; i++ ) {
+            processDirectory( subDirectory.listFiles()[i] );
+        }
     }
 
     private static void printFileName( File directory ) {
-        System.out.println( "File: " + directory.getName() );
+        numberOfFilesCounted++;
+        System.out.println( String.format( "%d. File: %s ", numberOfFilesCounted, directory.getName() ) );
     }
 
 }
