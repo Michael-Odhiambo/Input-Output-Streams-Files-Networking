@@ -16,7 +16,6 @@ public class DisplayNumberOfLinesInFile {
         catch ( Exception e ) {
             System.out.println( e );
         }
-
     }
 
     private static void processFileList( String[] fileList ) throws Exception {
@@ -25,6 +24,7 @@ public class DisplayNumberOfLinesInFile {
         for ( String fileName : fileList )
             processFile( new File( fileName ) );
     }
+
 
     private static void processFile( File file ) {
         try {
