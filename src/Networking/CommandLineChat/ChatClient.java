@@ -72,7 +72,6 @@ public class ChatClient {
                 portStr = DEFAULT_PORT;
         }
         else {
-
             computer = args[0];
             if ( args.length == 1 )
                 portStr = DEFAULT_PORT;
@@ -109,7 +108,7 @@ public class ChatClient {
         }
         catch ( Exception e ) {
             System.out.println( "An error occurred while opening connection." );
-            System.out.println( e.toString() );
+            System.out.println( e );
             return;
         }
 

@@ -41,12 +41,12 @@ public class FilesInSpecifiedDirectory {
         return directoryList;
     }
 
-    public File getSpecifiedFile( String nameOfSpecifiedFile ) {
+    public File getSpecifiedFile( String nameOfSpecifiedFile ) throws Exception {
         for ( File file : directoryList ) {
             if ( file.getName().equals( new File( nameOfSpecifiedFile ).getName() ) )
                 return file;
         }
-        return null;
+        throw new Exception( String.format( "File %s does not exist.", nameOfSpecifiedFile ) );
     }
 
 
