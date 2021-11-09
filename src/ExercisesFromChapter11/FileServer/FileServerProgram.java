@@ -33,7 +33,8 @@ public class FileServerProgram {
     }
 
     private static void startServer() throws Exception {
-        fileServer = new FileServer( directoryContainingServerFiles.getAbsolutePath(), serverListeningPort );
+        System.out.println( "Starting server." );
+        fileServer = new FileServer( directoryContainingServerFiles, serverListeningPort );
         fileServer.start();
 
     }

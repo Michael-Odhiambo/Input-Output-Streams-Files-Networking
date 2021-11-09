@@ -9,17 +9,25 @@ public class FileClient {
     private BufferedReader streamForReadingIncomingMessage;
     private PrintWriter streamForWritingOutgoingMessage;
     private final String HANDSHAKE = "FileClient";
+    private String serverName;
+    private int serverListeningPortNumber;
 
-
-    private void connectToAvailableServer( String serverName, int portNumber ) throws Exception {
-        setUpConnectionToServer( serverName, portNumber );
-        sendMessageToServer( HANDSHAKE );
-        verifyHandShakeFromServer();
+    public FileClient( int listeningPort, String serverName ) {
+        serverListeningPortNumber = listeningPort;
+        this.serverName = serverName;
     }
 
-    private void setUpConnectionToServer( String serverName, int portNumber ) throws Exception {
-        connectionToServer = new Socket( serverName, portNumber );
-        System.out.println( String.format( "Connected to server: %s through port: %d ", serverName, portNumber ) );
+    public void connectToAvailableServer() throws Exception {
+        setUpConnectionToServer();
+        verifyHandShakeFromServer();
+        sendMessageToServer( HANDSHAKE );
+        getHandShakeResponseFromServer();
+
+    }
+
+    private void setUpConnectionToServer() throws Exception {
+        connectionToServer = new Socket( serverName, serverListeningPortNumber );
+        System.out.println( String.format( "Connected to server: %s through port: %d ", serverName, serverListeningPortNumber ) );
         initializeReaderAndWriter();
     }
 
@@ -29,18 +37,25 @@ public class FileClient {
     }
 
     private void sendMessageToServer( String message ) {
+        System.out.println( String.format( "Sending message to server: %s", message ) );
         streamForWritingOutgoingMessage.println( message );
+        streamForWritingOutgoingMessage.flush();
     }
 
     private void verifyHandShakeFromServer() throws Exception {
-        if ( !streamForReadingIncomingMessage.equals( "FileServer" ) ) {
+        if ( !streamForReadingIncomingMessage.readLine().equals( "FileServer" ) ) {
             sendMessageToServer( "Server is not a File Server. Connection closed." );
             closeConnectionToServer();
         }
+        System.out.println( "Connection verified by client." );
     }
 
     private void closeConnectionToServer() throws Exception {
         connectionToServer.close();
+    }
+
+    private void getHandShakeResponseFromServer() throws Exception {
+        System.out.println( streamForReadingIncomingMessage.readLine() );
     }
 
 }

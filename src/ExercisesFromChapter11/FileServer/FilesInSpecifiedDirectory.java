@@ -14,8 +14,8 @@ public class FilesInSpecifiedDirectory {
     ArrayList<File> directoryList = new ArrayList<>();
 
 
-    public FilesInSpecifiedDirectory( String specifiedDirectoryName ) {
-        this.directory = new File( specifiedDirectoryName );
+    public FilesInSpecifiedDirectory( File specifiedDirectoryName ) {
+        this.directory = specifiedDirectoryName;
         addFilesInDirectoryToDirectoryList();
     }
 

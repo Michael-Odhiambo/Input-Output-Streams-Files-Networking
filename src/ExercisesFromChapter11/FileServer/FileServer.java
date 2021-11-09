@@ -22,13 +22,13 @@ public class FileServer {
     private String messageSent;
     private String HANDSHAKE = "FileServer";
 
-    public FileServer( String directoryContainingTheFiles, int listeningPort ) {
+    public FileServer( File directoryContainingTheFiles, int listeningPort ) {
         initializeAvailableFiles( directoryContainingTheFiles );
         initializeListeningPort( listeningPort );
 
     }
 
-    private void initializeAvailableFiles( String directoryContainingFiles ) {
+    private void initializeAvailableFiles( File directoryContainingFiles ) {
         availableFilesList = new FilesInSpecifiedDirectory( directoryContainingFiles );
     }
 
@@ -49,27 +49,37 @@ public class FileServer {
         listenerForConnection = new ServerSocket( listeningPort );
         System.out.println( String.format( "Listening on port %d ", listeningPort ) );
         connectionToClient = listenerForConnection.accept();
+        System.out.println( "Connection accepted." );
+        listenerForConnection.close();
     }
 
     private void setUpConnection() throws Exception {
+        System.out.println( "Server is setting up connection." );
         streamForReadingIncomingMessage = new BufferedReader( new InputStreamReader( connectionToClient.getInputStream() ) );
         streamForWritingOutgoingMessage = new PrintWriter( connectionToClient.getOutputStream() );
         sendMessageToClient( HANDSHAKE );
         verifyHandshakeFromClient();
 
+
+
     }
 
     private void sendMessageToClient( String message ) {
+        System.out.println( String.format( "Server sending message: %s", message ) );
         streamForWritingOutgoingMessage.println( message );
         streamForWritingOutgoingMessage.flush();
+        System.out.println( "Done sending message." );
     }
 
     private void verifyHandshakeFromClient() throws Exception {
-        messageReceived = streamForReadingIncomingMessage.readLine();
-        if ( !messageReceived.equals( "FileClient" ) ) {
+        String line = streamForReadingIncomingMessage.readLine();
+        if ( !line.equals( "FieClient" ) ) {
             sendMessageToClient( "Client is not a File Client. Connection closed." );
             closeConnectionToClient();
+            return;
         }
+        System.out.println( "Connection verified by server." );
+        sendMessageToClient( "Connection verified." );
     }
 
     public void processCommandFromClient( String command ) throws Exception {
