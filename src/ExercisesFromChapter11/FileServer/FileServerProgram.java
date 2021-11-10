@@ -8,13 +8,13 @@ public class FileServerProgram {
     private static String[] commandLineArguments;
     private static File directoryContainingServerFiles;
     private static int serverListeningPort;
-    private static String serverName;
 
     public static void main( String[] args ) {
         try {
             setCommandLineArguments( args );
             processCommandLineArguments();
             startServer();
+            getClientRequests();
         }
         catch ( Exception e ) {
             System.out.println( e );
@@ -29,7 +29,6 @@ public class FileServerProgram {
         verifyAllArgumentAreProvided();
         getDirectoryContainingServerFiles();
         getServerListeningPort();
-        getServerName();
     }
 
     private static void startServer() throws Exception {
@@ -40,8 +39,8 @@ public class FileServerProgram {
     }
 
     private static void verifyAllArgumentAreProvided() throws Exception {
-        if ( commandLineArguments.length < 3 )
-            throw new Exception("Usage: java <DirectoryContainingFiles> <ListeningPort> <ServerName> ");
+        if ( commandLineArguments.length < 2 )
+            throw new Exception("Usage: java <DirectoryContainingFiles> <ListeningPort> ");
     }
 
     private static void getDirectoryContainingServerFiles() throws Exception {
@@ -51,7 +50,7 @@ public class FileServerProgram {
             throw new Exception( String.format( "No such file or directory: %s", commandLineArguments[0].trim() ) );
     }
 
-    private static void getServerListeningPort() throws Exception {
+    private static void getServerListeningPort() {
         try {
             serverListeningPort = Integer.parseInt( commandLineArguments[1] );
         }
@@ -60,7 +59,17 @@ public class FileServerProgram {
         }
     }
 
-    private static void getServerName() {
-        serverName = commandLineArguments[2].trim();
+    private static void getClientRequests() throws Exception {
+        while ( true ) {
+            System.out.println();
+            System.out.println( "Waiting for client request..." );
+            processClientRequest( fileServer.getUserMessageFromInputStream() );
+
+        }
     }
+
+    private static void processClientRequest( String request ) throws Exception {
+        fileServer.processRequestFromClient( request );
+    }
+
 }

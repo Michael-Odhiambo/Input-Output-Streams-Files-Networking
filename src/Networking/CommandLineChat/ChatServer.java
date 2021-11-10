@@ -95,7 +95,7 @@ public class ChatServer {
         }
         catch ( Exception e ) {
             System.out.println( "An error occurred while opening connection." );
-            System.out.println( e.toString() );
+            System.out.println( e );
             return;
         }
 

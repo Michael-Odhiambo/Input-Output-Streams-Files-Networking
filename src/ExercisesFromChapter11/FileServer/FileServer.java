@@ -47,7 +47,7 @@ public class FileServer {
 
     private void listenForConnection() throws Exception {
         listenerForConnection = new ServerSocket( listeningPort );
-        System.out.println( String.format( "Listening on port %d ", listeningPort ) );
+        System.out.println( String.format( "Listening on port %d ", listenerForConnection.getLocalPort() ) );
         connectionToClient = listenerForConnection.accept();
         System.out.println( "Connection accepted." );
         listenerForConnection.close();
@@ -59,9 +59,6 @@ public class FileServer {
         streamForWritingOutgoingMessage = new PrintWriter( connectionToClient.getOutputStream() );
         sendMessageToClient( HANDSHAKE );
         verifyHandshakeFromClient();
-
-
-
     }
 
     private void sendMessageToClient( String message ) {
@@ -72,8 +69,7 @@ public class FileServer {
     }
 
     private void verifyHandshakeFromClient() throws Exception {
-        String line = streamForReadingIncomingMessage.readLine();
-        if ( !line.equals( "FieClient" ) ) {
+        if ( !streamForReadingIncomingMessage.readLine().equals( "FileClient" ) ) {
             sendMessageToClient( "Client is not a File Client. Connection closed." );
             closeConnectionToClient();
             return;
@@ -82,31 +78,46 @@ public class FileServer {
         sendMessageToClient( "Connection verified." );
     }
 
-    public void processCommandFromClient( String command ) throws Exception {
-        command = command.toLowerCase();
-        if ( command.equals( "index" ) )
+    public void processRequestFromClient( String command ) throws Exception {
+        if ( command.equalsIgnoreCase( "index" ) )
             displayAvailableFilesToClient();
-        else if ( command.startsWith( "g" ) ) {
-            getRequestedFile(command.substring(3).trim());
-            closeConnectionToClient();
+        else if ( command.startsWith( "get" ) ) {
+            System.out.println();
+            System.out.println( "Get request received." );
+            System.out.println( String.format( "Getting the file: %s", command.substring(3).trim() ) );
+            System.out.println();
+            getRequestedFile( command.substring(3).trim() );
         }
         else {
             sendMessageToClient("ERROR. Connection lost.");
-            closeConnectionToClient();
         }
     }
 
-    private void displayAvailableFilesToClient() {
+    private void displayAvailableFilesToClient() throws Exception {
         for ( File file : availableFilesList.getFiles() )
             streamForWritingOutgoingMessage.println( file.getName() );
+        streamForWritingOutgoingMessage.flush();
+
+        if ( streamForWritingOutgoingMessage.checkError() )
+            throw new Exception( "Error while trying to send data" );
     }
 
     private void getRequestedFile( String fileName ) throws Exception {
+        streamForReadingIncomingMessage = new BufferedReader( new InputStreamReader( connectionToClient.getInputStream() ) );
+        streamForWritingOutgoingMessage = new PrintWriter( connectionToClient.getOutputStream() );
+
+        System.out.println( "ok" );
+        System.out.println();
         streamForWritingOutgoingMessage.println( "OK" );
-        streamForWritingOutgoingMessage.println( availableFilesList.getSpecifiedFile( fileName ) );
+        streamForWritingOutgoingMessage.println( availableFilesList.getSpecifiedFile( fileName ).getName() );
+        streamForWritingOutgoingMessage.flush();  // MAKE SURE THE MESSAGE IS SENT.
     }
 
     private void closeConnectionToClient() throws Exception {
         connectionToClient.close();
+    }
+
+    public String getUserMessageFromInputStream() throws Exception {
+        return streamForReadingIncomingMessage.readLine().trim();
     }
 }

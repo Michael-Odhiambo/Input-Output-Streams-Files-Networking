@@ -2,6 +2,8 @@ package ExercisesFromChapter11.FileServer;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
+import java.util.stream.Stream;
 
 public class FileClient {
 
@@ -50,12 +52,22 @@ public class FileClient {
         System.out.println( "Connection verified by client." );
     }
 
-    private void closeConnectionToServer() throws Exception {
+    public void closeConnectionToServer() throws Exception {
         connectionToServer.close();
     }
 
     private void getHandShakeResponseFromServer() throws Exception {
         System.out.println( streamForReadingIncomingMessage.readLine() );
     }
+
+    public void sendClientRequestToServer( String request ) {
+        sendMessageToServer( request );
+    }
+
+    public void getServerReply() {
+        streamForReadingIncomingMessage.lines().forEach( message -> System.out.println( message ) );
+        System.out.println("Done getting server reply.");
+    }
+
 
 }

@@ -161,7 +161,7 @@ public class ChatClient {
         }
         catch ( Exception e ) {
             System.out.println( "Sorry, an error occurred. Connection lost." );
-            System.out.println( e.toString() );
+            System.out.println( e );
             System.exit(1);
         }
     }
