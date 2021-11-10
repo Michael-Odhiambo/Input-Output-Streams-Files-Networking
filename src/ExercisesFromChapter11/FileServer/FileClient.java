@@ -2,7 +2,6 @@ package ExercisesFromChapter11.FileServer;
 
 import java.io.*;
 import java.net.*;
-import java.util.ArrayList;
 import java.util.stream.Stream;
 
 public class FileClient {
@@ -64,9 +63,11 @@ public class FileClient {
         sendMessageToServer( request );
     }
 
-    public void getServerReply() {
-        streamForReadingIncomingMessage.lines().forEach( message -> System.out.println( message ) );
+    public Stream<String> getServerReply() {
+        Stream<String> lines = streamForReadingIncomingMessage.lines();
         System.out.println("Done getting server reply.");
+        return lines;
+
     }
 
 

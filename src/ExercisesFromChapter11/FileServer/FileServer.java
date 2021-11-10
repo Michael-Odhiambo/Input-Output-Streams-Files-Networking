@@ -40,17 +40,24 @@ public class FileServer {
     }
 
     public void start() throws Exception {
-        listenForConnection();
-        setUpConnection();
+        while ( true ) {
+            listenForConnectionFromClients();
+            handleConnectionWithConnectedClients();
+            closeConnectionToClient();
+        }
 
     }
 
-    private void listenForConnection() throws Exception {
+    private void listenForConnectionFromClients() throws Exception {
         listenerForConnection = new ServerSocket( listeningPort );
         System.out.println( String.format( "Listening on port %d ", listenerForConnection.getLocalPort() ) );
         connectionToClient = listenerForConnection.accept();
         System.out.println( "Connection accepted." );
         listenerForConnection.close();
+    }
+
+    private void handleConnectionWithConnectedClients() throws Exception {
+        setUpConnection();
     }
 
     private void setUpConnection() throws Exception {
@@ -113,7 +120,7 @@ public class FileServer {
         streamForWritingOutgoingMessage.flush();  // MAKE SURE THE MESSAGE IS SENT.
     }
 
-    private void closeConnectionToClient() throws Exception {
+    public void closeConnectionToClient() throws Exception {
         connectionToClient.close();
     }
 

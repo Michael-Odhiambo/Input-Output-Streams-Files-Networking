@@ -60,16 +60,21 @@ public class FileServerProgram {
     }
 
     private static void getClientRequests() throws Exception {
-        while ( true ) {
-            System.out.println();
-            System.out.println( "Waiting for client request..." );
-            processClientRequest( fileServer.getUserMessageFromInputStream() );
-
-        }
+        System.out.println();
+        System.out.println( "Waiting for client request..." );
+        processClientRequest( fileServer.getUserMessageFromInputStream() );
+        closeConnectionWithClient();
     }
 
     private static void processClientRequest( String request ) throws Exception {
+        System.out.println( String.format( "Received request \"%s\" from client.", request ) );
+        System.out.println( "Processing request." );
+        System.out.println();
         fileServer.processRequestFromClient( request );
+    }
+
+    private static void closeConnectionWithClient() throws Exception {
+        fileServer.closeConnectionToClient();
     }
 
 }

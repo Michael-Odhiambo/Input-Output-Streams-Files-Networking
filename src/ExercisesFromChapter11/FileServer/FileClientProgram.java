@@ -1,6 +1,7 @@
 package ExercisesFromChapter11.FileServer;
 
 import java.util.Scanner;
+import java.util.stream.Stream;
 
 public class FileClientProgram {
 
@@ -58,7 +59,7 @@ public class FileClientProgram {
         serverName = commandLineArguments[1].trim();
     }
 
-    private static void sendRequestToServer() throws Exception {
+    private static void sendRequestToServer() {
         getClientRequest = new Scanner( System.in );
 
         System.out.println( "Input request: " );
@@ -66,8 +67,11 @@ public class FileClientProgram {
         fileClient.sendClientRequestToServer( clientRequest );
         System.out.println( String.format( "Sent request %s to server.", clientRequest ) );
         System.out.println( "Waiting for reply from server." );
-        fileClient.getServerReply();
+
+        Stream<String> lines = fileClient.getServerReply();
+        lines.forEachOrdered( message -> System.out.println( message ) );
         System.out.println( "Done processing reply" );
+        System.out.println();
 
     }
 }
