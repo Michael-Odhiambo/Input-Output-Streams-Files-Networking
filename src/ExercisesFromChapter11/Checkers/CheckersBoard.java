@@ -148,7 +148,7 @@ public class CheckersBoard {
         return moves;
     }
 
-    private ArrayList<CheckersMove> getJumpMovesForPiece( CheckersPiece piece ) {
+    public ArrayList<CheckersMove> getJumpMovesForPiece( CheckersPiece piece ) {
         int row = piece.getRow();
         int col = piece.getColumn();
 

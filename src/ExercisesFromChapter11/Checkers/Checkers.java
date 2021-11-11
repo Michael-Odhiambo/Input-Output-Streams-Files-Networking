@@ -99,9 +99,19 @@ public class Checkers extends Application {
         if ( selectedPieceCanMove( move ) ) {
             checkersBoard.movePiece( pieceToMove, move );
             checkIfPieceIsToBeKing( move );
+            if ( playerNeedsToContinueJumping( move ) )
+                return;
             switchPlayer();
         }
         aPieceIsCurrentlySelected = false;
+    }
+
+    private boolean playerNeedsToContinueJumping( CheckersMove move ) {
+        if ( !move.isJump() )
+            return false;
+        if ( checkersBoard.getJumpMovesForPiece( pieceToMove ).size() < 1 )
+            return false;
+        return true;
     }
 
     private void checkIfPieceIsToBeKing( CheckersMove move ) {
@@ -222,6 +232,7 @@ public class Checkers extends Application {
 
     private Menu createControlMenu() {
         Menu controlMenu = new Menu( "Control" );
+        controlMenu.getItems().addAll( createNewGameMenuItem(), createQuitMenuItem() );
         return controlMenu;
 
     }
@@ -237,4 +248,21 @@ public class Checkers extends Application {
         //load.setOnAction( event -> loadGame() );
         return load;
     }
+
+    private MenuItem createNewGameMenuItem() {
+        MenuItem newGame = new MenuItem( "New Game" );
+        //newGame.setOnAction( event -> doNewGame() );
+        return newGame;
+    }
+
+    private MenuItem createQuitMenuItem() {
+        MenuItem quit = new MenuItem( "Quit" );
+        quit.setOnAction( event -> quitGame() );
+        return quit;
+    }
+
+    private void quitGame() {
+        System.exit(1);
+    }
+
 }
