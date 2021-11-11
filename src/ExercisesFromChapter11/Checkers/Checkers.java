@@ -98,9 +98,17 @@ public class Checkers extends Application {
         CheckersMove move = new CheckersMove( pieceToMove.getRow(), pieceToMove.getColumn(), currentlyClickedRow, currentlyClickedColumn );
         if ( selectedPieceCanMove( move ) ) {
             checkersBoard.movePiece( pieceToMove, move );
+            checkIfPieceIsToBeKing( move );
             switchPlayer();
         }
         aPieceIsCurrentlySelected = false;
+    }
+
+    private void checkIfPieceIsToBeKing( CheckersMove move ) {
+        if ( pieceToMove.getPieceColor().equals( "red" ) && move.getToRow() == 7 )
+            checkersBoard.setKing( pieceToMove );
+        else if ( pieceToMove.getPieceColor().equals( "blue" ) && move.getToRow() == 0 )
+            checkersBoard.setKing( pieceToMove );
     }
 
     private boolean selectedPieceCanMove( CheckersMove moveToMake ) {
@@ -170,11 +178,21 @@ public class Checkers extends Application {
     private void drawRedPiece( int row, int col ) {
         drawingArea.setFill( Color.RED );
         drawingArea.fillOval( 15 + col*80, 15 + row*80, 50, 50 );
+        if ( checkersBoard.getPieceAt( row, col ).isKing() )
+            drawKing( row, col );
     }
 
     private void drawBluePiece( int row, int col ) {
         drawingArea.setFill( Color.BLUE );
         drawingArea.fillOval( 15 + col*80, 15 + row*80, 50, 50 );
+        if ( checkersBoard.getPieceAt( row, col ).isKing() )
+            drawKing( row, col );
+    }
+
+    private void drawKing( int row, int col ) {
+        drawingArea.setStroke( Color.WHITE );
+        drawingArea.setLineWidth( 2 );
+        drawingArea.strokeText( "K", 35+col*80, 45+row*80 );
     }
 
 

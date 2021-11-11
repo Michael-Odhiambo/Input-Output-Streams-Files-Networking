@@ -5,8 +5,6 @@ import java.util.List;
 
 public class CheckersBoard {
 
-    private int BLUE_PIECE = 1;
-    private int RED_PIECE = 2;
     private CheckersPiece[][] checkersBoard = new CheckersPiece[8][8];
 
     public CheckersBoard() {
@@ -165,5 +163,11 @@ public class CheckersBoard {
             jumps.add( new CheckersMove( row, col, row+2, col+2 ) );
 
         return jumps;
+    }
+
+    public void setKing( CheckersPiece piece ) {
+        piece.setKing();
+
+
     }
 }
