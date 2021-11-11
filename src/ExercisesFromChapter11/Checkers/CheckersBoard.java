@@ -167,7 +167,12 @@ public class CheckersBoard {
 
     public void setKing( CheckersPiece piece ) {
         piece.setKing();
+    }
 
-
+    public void addPiece( CheckersPiece piece ) {
+        System.out.println( "Added piece color:  " + piece.getPieceColor() );
+        System.out.println( "Row of piece: " + piece.getRow() );
+        System.out.println( "Column of piece: " + piece.getColumn() );
+        checkersBoard[piece.getRow()][piece.getColumn()] = piece;
     }
 }

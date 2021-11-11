@@ -413,8 +413,6 @@ public class SimplePaintWithXML extends Application {
 
 
     private void openFile( File selectedFile ) throws Exception {
-        if ( selectedFile == null )
-            return;  // User did not select a file, i.e. cancelled.
         xmlRepresentationOfFileBeingOpened = createTreeRepresentationOfTheXMLFile( selectedFile );
         checkVersionOfTheFile( xmlRepresentationOfFileBeingOpened.getDocumentElement() );
         processChildNodes( xmlRepresentationOfFileBeingOpened.getDocumentElement().getChildNodes() );

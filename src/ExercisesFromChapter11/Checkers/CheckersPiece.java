@@ -44,5 +44,17 @@ public class CheckersPiece {
         return String.format( "%sKing", pieceColor );
     }
 
+    public void setRowOfPiece( int row ) {
+        rowOfPiece = row;
+    }
+
+    public void setColumnOfPiece( int column ) {
+        columnOfPiece = column;
+    }
+
+    public void setPieceColor( String color ) {
+        pieceColor = color;
+    }
+
 
 }

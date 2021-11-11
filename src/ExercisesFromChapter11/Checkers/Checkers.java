@@ -16,6 +16,12 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.MouseEvent;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 
 public class Checkers extends Application {
@@ -39,6 +45,9 @@ public class Checkers extends Application {
     private String BLUE_PLAYER = "BLUE";
     private String RED_PLAYER = "RED";
     private String currentPlayer = RED_PLAYER;
+
+    CheckersBoard newCheckersBoard = new CheckersBoard();
+    Document xmlRepresentationOfFileBeingOpened;
 
     private boolean gameIsBeingContinued = false;
     File gameBeingContinued;
@@ -319,7 +328,7 @@ public class Checkers extends Application {
         writeElement( streamToOutputFile, String.format( "<CurrentlyClickedRow row = '" + currentlyClickedRow + "' />" ), 8 );
         writeElement( streamToOutputFile, String.format( "<CurrentlyClickedColumn column = '" + currentlyClickedColumn + "' />" ), 8 );
         writeElement( streamToOutputFile, String.format( "<PreviouslyClickedRow row = '" + previouslyClickedRow + "' />" ), 8 );
-        writeElement( streamToOutputFile, String.format( "<PreviouslyClickedRow column = '" + previouslyClickedColumn + "' />" ), 8 );
+        writeElement( streamToOutputFile, String.format( "<PreviouslyClickedColumn column = '" + previouslyClickedColumn + "' />" ), 8 );
         writeElement( streamToOutputFile, String.format( "<CurrentPlayer player = '" + currentPlayer + "' />" ), 8 );
         writePieces( streamToOutputFile );
         writeElement( streamToOutputFile, "</Checkers>", 4 );
@@ -348,10 +357,10 @@ public class Checkers extends Application {
                 CheckersPiece piece = checkersBoard.getPieceAt( row, col );
                 if ( piece != null ) {
                     writeElement( out, String.format( "<Piece>"), 12 );
-                    writeElement( out, String.format( "<Row row='" + piece.getRow() + "'/>"), 16 );
-                    writeElement( out, String.format( "<Column column='" + piece.getColumn() + "'/>"), 16 );
+                    writeElement( out, String.format( "<PieceRow row='" + piece.getRow() + "'/>"), 16 );
+                    writeElement( out, String.format( "<PieceColumn column='" + piece.getColumn() + "'/>"), 16 );
                     writeElement( out, String.format( "<King> %s </King>", piece.isKing() ), 16 );
-                    writeElement( out, String.format( "<Color color='" + piece.getPieceColor() + "'/>" ), 16 );
+                    writeElement( out, String.format( "<PieceColor color='" + piece.getPieceColor() + "'/>" ), 16 );
                     writeElement( out, String.format( "</Piece>" ), 12 );
                 }
             }
@@ -370,8 +379,225 @@ public class Checkers extends Application {
 
     private MenuItem createLoadMenuItem() {
         MenuItem load = new MenuItem( "Load" );
-        //load.setOnAction( event -> loadGame() );
+        load.setOnAction( event -> loadPreviouslySavedGame() );
         return load;
+    }
+
+    private void loadPreviouslySavedGame() {
+        FileChooser fileDialog = initializeFileDialog( "Select the file to be opened." );
+        File selectedFile = fileDialog.showOpenDialog( mainWindow );
+        openFileWhileCheckingErrors( selectedFile );
+    }
+
+    private void openFileWhileCheckingErrors( File selectedFile ) {
+        if ( selectedFile == null )
+            return;  // User has not selected a file.
+        try {
+            openFile( selectedFile );
+            drawBoard();
+        }
+        catch ( Exception e ) {
+            System.out.println( e );
+            Alert errorAlert = new Alert( Alert.AlertType.ERROR, String.format("%s", e) );
+            errorAlert.showAndWait();
+            return;
+        }
+    }
+
+    private void openFile( File selectedFile ) throws Exception {
+        xmlRepresentationOfFileBeingOpened = createTreeRepresentationOfTheXMLFile( selectedFile );
+        checkVersionOfTheFile( xmlRepresentationOfFileBeingOpened.getDocumentElement() );
+        processChildNodes( xmlRepresentationOfFileBeingOpened.getDocumentElement().getChildNodes() );
+        setFileBeingEdited( selectedFile );
+        checkersBoard = newCheckersBoard;
+    }
+
+    private Document createTreeRepresentationOfTheXMLFile(File selectedFile ) throws Exception {
+        try {
+            Document xmlDocument;
+            DocumentBuilder docReader = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+            xmlDocument = docReader.parse( selectedFile );
+            System.out.println( "xml tree successfully created." );
+            return xmlDocument;
+        }
+        catch ( Exception e ) {
+            System.out.println( "create tree " + e );
+            throw e;
+        }
+    }
+
+    private void checkVersionOfTheFile( Element rootNodeOfTheXMLDocument ) throws Exception {
+        if ( !rootNodeOfTheXMLDocument.getNodeName().equals( "Checkers" ) )
+            throw new Exception( "File is not a simple paint file." );
+        System.out.println( "version of file passed." );
+        checkVersionNumber( rootNodeOfTheXMLDocument );
+    }
+
+    private void checkVersionNumber( Element rootNodeOfTheXMLDocument ) throws Exception {
+        try {
+            String version = rootNodeOfTheXMLDocument.getAttribute( "version" );
+            double versionNumber = Double.parseDouble( version );
+            if ( versionNumber > 1.0 )
+                throw new Exception( "File requires a newer version of Paint." );
+            System.out.println( "version number passed." );
+        }
+        catch ( Exception e ) {
+            System.out.println( "version number " + e );
+            throw e;
+        }
+    }
+
+    private void processChildNodes( NodeList childNodes ) throws Exception {
+        for ( int i = 0; i < childNodes.getLength(); i++ ) {
+            if ( childNodes.item(i) instanceof Element ) {
+                processElement( (Element) childNodes.item(i) );
+            }
+        }
+    }
+
+    private void processElement( Element elementToProcess ) throws Exception {
+        if ( elementToProcess.getTagName().equals( "CurrentlyClickedRow" ) )
+            currentlyClickedRow = getCurrentlyClickedRow( elementToProcess );
+        else if ( elementToProcess.getTagName().equals( "CurrentlyClickedColumn" ) )
+            currentlyClickedColumn = getCurrentlyClickedColumn( elementToProcess );
+        else if ( elementToProcess.getTagName().equals( "PreviouslyClickedRow" ) )
+            previouslyClickedRow = getPreviouslyClickedRow( elementToProcess );
+        else if ( elementToProcess.getTagName().equals( "PreviouslyClickedColumn" ) )
+            previouslyClickedColumn = getPreviouslyClickedColumn( elementToProcess );
+        else if ( elementToProcess.getTagName().equals( "Piece" ) ) {
+            newCheckersBoard.addPiece( processPiece( elementToProcess ) );
+        }
+    }
+
+    private CheckersPiece processPiece( Element thePiece ) {
+        CheckersPiece piece = createPieceAndInitializeKeyVariables();
+        NodeList pieceNodes = thePiece.getChildNodes();
+        for ( int j = 0; j < pieceNodes.getLength(); j++ ) {
+            if ( pieceNodes.item(j) instanceof Element )
+                processPieceElement( piece, (Element) pieceNodes.item(j) );
+        }
+        return piece;
+    }
+
+    private CheckersPiece createPieceAndInitializeKeyVariables() {
+        CheckersPiece piece = new CheckersPiece( 0, 0, null );
+        return piece;
+    }
+
+    private int getCurrentlyClickedRow( Element currentlyClickedRowElement ) throws Exception {
+        try {
+            int row = Integer.parseInt( currentlyClickedRowElement.getAttribute( "row" ) );
+            System.out.println( "currently clicked row: " + row );
+            return row;
+        }
+        catch ( Exception e ) {
+            System.out.println( "clicked row " + e );
+            throw new Exception(e);
+        }
+    }
+
+    private int getCurrentlyClickedColumn( Element currentlyClickedRowElement ) {
+        try {
+            int col = Integer.parseInt( currentlyClickedRowElement.getAttribute( "column" ) );
+            System.out.println( "currently clicked col; " + col );
+            return col;
+        }
+        catch ( Exception e ) {
+            System.out.println( "clicked col " + e );
+            throw e;
+        }
+    }
+
+    private int getPreviouslyClickedRow( Element previouslyClickedRowElement ) {
+        try {
+            int row = Integer.parseInt( previouslyClickedRowElement.getAttribute( "row" ) );
+            System.out.println( "Previously clicked row: " + row );
+            return row;
+        }
+        catch ( Exception e ) {
+            System.out.println( "pclicked row " + e );
+            throw e;
+        }
+    }
+
+    private int getPreviouslyClickedColumn( Element previouslyClickedRowElement ) throws Exception {
+        try {
+            int column = Integer.parseInt( previouslyClickedRowElement.getAttribute( "column" ) );
+            System.out.println( "Previously clicked column: " + column );
+            return column;
+        }
+        catch ( Exception e ) {
+            System.out.println( "pclickedCol " + e );
+            throw e;
+        }
+    }
+
+
+    private void processPieceElement( CheckersPiece piece, Element pieceElement ) {
+        if ( pieceElement.getTagName().equals( "PieceRow" ) ) {
+            piece.setRowOfPiece( getRowNumber( pieceElement ) );
+        }
+        else if ( pieceElement.getTagName().equals( "PieceColumn" ) ) {
+            piece.setColumnOfPiece( getColumnNumber( pieceElement ) );
+        }
+        else if ( pieceElement.getTagName().equals( "PieceColor" ) ) {
+            piece.setPieceColor( getPieceColor( pieceElement ) );
+        }
+        else if ( pieceElement.getTagName().equals( "King" ) ) {
+            if ( setPieceKingProperty( pieceElement ) )
+                piece.setKing();
+        }
+    }
+
+    private int getRowNumber( Element rowElement ) {
+        try {
+            String rowAttribute = rowElement.getAttribute( "row" );
+            int row = Integer.parseInt( rowAttribute );
+            System.out.println( row );
+            return row;
+        }
+        catch ( Exception e ) {
+            System.out.println( "row number " + e );
+            throw e;
+        }
+    }
+
+    private int getColumnNumber( Element columnElement ) {
+        try {
+            String columnAttribute = columnElement.getAttribute( "column" );
+            int column = Integer.parseInt( columnAttribute );
+            System.out.println( column );
+            return column;
+        }
+        catch ( Exception e ) {
+            System.out.println( "col number " + e );
+            throw e;
+        }
+    }
+
+    private String getPieceColor( Element colorElement ) {
+        try {
+            String color = colorElement.getAttribute( "color" );
+            System.out.println( "gotten color: " + color );
+            return color;
+        }
+        catch ( Exception e ) {
+            System.out.println( "piece color " + e );
+            throw e;
+        }
+    }
+
+    private boolean setPieceKingProperty( Element kingElement ) {
+        try {
+            String kingProperty = kingElement.getTextContent();
+            if ( kingProperty.equals( "true" ) )
+                return true;
+            return false;
+        }
+        catch ( Exception e ) {
+            System.out.println( "king property " + e );
+            throw e;
+        }
     }
 
     // -------------------------------------------------------------------------------------------------
