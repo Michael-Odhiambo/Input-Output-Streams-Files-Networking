@@ -1,7 +1,11 @@
 package ExercisesFromChapter11.Checkers;
 
+import java.io.*;
+
 import javafx.application.Application;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.scene.Scene;
 import javafx.scene.canvas.Canvas;
@@ -28,13 +32,19 @@ public class Checkers extends Application {
 
     private int currentlyClickedRow;
     private int currentlyClickedColumn;
-    
+
     private int previouslyClickedRow;
     private int previouslyClickedColumn;
 
     private String BLUE_PLAYER = "BLUE";
     private String RED_PLAYER = "RED";
     private String currentPlayer = RED_PLAYER;
+
+    private boolean gameIsBeingContinued = false;
+    File gameBeingContinued;
+    private String defaultNameOfGameFile = "CheckersGameFile.txt";
+
+    private PrintWriter streamToOutputFile;
 
     private CheckersBoard checkersBoard = new CheckersBoard();
 
@@ -241,9 +251,122 @@ public class Checkers extends Application {
 
     private MenuItem createSaveMenuItem() {
         MenuItem save = new MenuItem( "Save" );
-        //save.setOnAction( event -> saveCurrentState() );
+        save.setOnAction( event -> saveCurrentGameState() );
         return save;
     }
+
+    /**
+     * Save the user's game to a file in human-readable text format.
+     */
+    private void saveCurrentGameState() {
+        try {
+            FileChooser fileDialog = initializeFileDialog( "Select the file to be saved" );
+            File selectedFile = fileDialog.showSaveDialog( mainWindow );
+            saveFile( selectedFile );
+        }
+        catch ( IOException e ) {
+            Alert errorAlert = new Alert( Alert.AlertType.ERROR, "Sorry, but an error occurred while\n" +
+                    "trying to save the file." + e );
+            errorAlert.showAndWait();
+            return;
+        }
+    }
+
+    private FileChooser initializeFileDialog( String dialogTitle ) {
+        FileChooser fileDialog = new FileChooser();
+        initializeNameAndDirectoryOfTheFileDialog( fileDialog );
+        setFileDialogTitle( fileDialog, dialogTitle );
+        return fileDialog;
+
+    }
+
+    private void initializeNameAndDirectoryOfTheFileDialog( FileChooser fileDialog ) {
+        if ( gameIsBeingContinued )  {
+            fileIsBeingEdited( fileDialog );
+        }
+        else
+            noFileIsBeingEdited( fileDialog );
+    }
+
+    private void fileIsBeingEdited( FileChooser fileDialog ) {
+        // Get the file name and directory for the dialog from the file that is being edited.
+        fileDialog.setInitialFileName( gameBeingContinued.getName() );
+        fileDialog.setInitialFileName( String.format( "%s.png", gameBeingContinued.getName() ));
+        fileDialog.setInitialDirectory( gameBeingContinued.getParentFile() );
+    }
+
+    private void noFileIsBeingEdited( FileChooser fileDialog ) {
+        // No file is being edited. So set the file name in the dialog to "filename.txt" and set the
+        // directory in the dialog to the user's home directory.
+        fileDialog.setInitialFileName( defaultNameOfGameFile );
+        fileDialog.setInitialDirectory( new File( System.getProperty( "user.home" ) ) );
+    }
+
+    private void saveFile( File selectedFile ) throws IOException {
+        if ( selectedFile == null )
+            return;  // User did not select a file i.e. cancelled.
+        // At this point, the user has selected a file and if the file exists has confirmed that it is OK
+        // to erase the existing file.
+        streamToOutputFile = createStreamForWritingToFile( selectedFile );
+        writeImageContentToFile();
+        closeOutputStream();
+        setFileBeingEdited( selectedFile );
+    }
+
+    private void writeImageContentToFile() {
+        writeElement( streamToOutputFile, "<?xml version = \"1.0\"?>", 0 );
+        writeElement( streamToOutputFile, "<Checkers version = \"1.0\">", 4 );
+        writeElement( streamToOutputFile, String.format( "<CurrentlyClickedRow row = '" + currentlyClickedRow + "' />" ), 8 );
+        writeElement( streamToOutputFile, String.format( "<CurrentlyClickedColumn column = '" + currentlyClickedColumn + "' />" ), 8 );
+        writeElement( streamToOutputFile, String.format( "<PreviouslyClickedRow row = '" + previouslyClickedRow + "' />" ), 8 );
+        writeElement( streamToOutputFile, String.format( "<PreviouslyClickedRow column = '" + previouslyClickedColumn + "' />" ), 8 );
+        writeElement( streamToOutputFile, String.format( "<CurrentPlayer player = '" + currentPlayer + "' />" ), 8 );
+        writePieces( streamToOutputFile );
+        writeElement( streamToOutputFile, "</Checkers>", 4 );
+
+    }
+
+    private PrintWriter createStreamForWritingToFile ( File selectedFile ) throws IOException {
+        return new PrintWriter( new FileWriter( selectedFile ) );
+    }
+
+    private void closeOutputStream() {
+        streamToOutputFile.close();
+    }
+
+    private void setFileBeingEdited( File selectedFile ) {
+        gameBeingContinued = selectedFile;
+    }
+
+    private void setFileDialogTitle( FileChooser fileDialog, String fileDialogTitle ) {
+        fileDialog.setTitle( fileDialogTitle );
+    }
+
+    private void writePieces( PrintWriter out ) {
+        for ( int row = 0; row < 8; row++ ) {
+            for ( int col = 0; col < 8; col++ ) {
+                CheckersPiece piece = checkersBoard.getPieceAt( row, col );
+                if ( piece != null ) {
+                    writeElement( out, String.format( "<Piece>"), 12 );
+                    writeElement( out, String.format( "<Row row='" + piece.getRow() + "'/>"), 16 );
+                    writeElement( out, String.format( "<Column column='" + piece.getColumn() + "'/>"), 16 );
+                    writeElement( out, String.format( "<King> %s </King>", piece.isKing() ), 16 );
+                    writeElement( out, String.format( "<Color color='" + piece.getPieceColor() + "'/>" ), 16 );
+                    writeElement( out, String.format( "</Piece>" ), 12 );
+                }
+            }
+        }
+    }
+
+    private void writeElement( PrintWriter out, String element, int indentationLevel ) {
+        for ( int i = 0; i < indentationLevel; i++ )
+            out.print( " " );
+        out.println( element );
+        out.flush();
+    }
+
+
+    // ------------------------------------------------------------------------------------------------
 
     private MenuItem createLoadMenuItem() {
         MenuItem load = new MenuItem( "Load" );
