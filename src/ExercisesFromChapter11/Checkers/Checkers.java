@@ -29,6 +29,13 @@ public class Checkers extends Application {
     private int currentlyClickedRow;
     private int currentlyClickedColumn;
 
+    private int previouslyClickedRow;
+    private int previouslyClickedColumn;
+
+    private String BLUE_PLAYER = "BLUE";
+    private String RED_PLAYER = "RED";
+    private String currentPlayer = RED_PLAYER;
+
     private CheckersBoard checkersBoard = new CheckersBoard();
 
     public static void main( String[] args ) {
@@ -76,6 +83,12 @@ public class Checkers extends Application {
 
     }
 
+    private void switchPlayer() {
+        if ( previouslyClickedRow == currentlyClickedRow && previouslyClickedColumn == currentlyClickedColumn )
+            return;
+        currentPlayer = ( currentPlayer == RED_PLAYER ) ? BLUE_PLAYER : RED_PLAYER;
+    }
+
     private void setCurrentlyClickedRowAndColumn( MouseEvent event ) {
         currentlyClickedColumn = (int)( event.getX() / 80 );
         currentlyClickedRow = (int)( event.getY() / 80 );
@@ -85,6 +98,7 @@ public class Checkers extends Application {
         CheckersMove move = new CheckersMove( pieceToMove.getRow(), pieceToMove.getColumn(), currentlyClickedRow, currentlyClickedColumn );
         if ( selectedPieceCanMove( move ) ) {
             checkersBoard.movePiece( pieceToMove, move );
+            switchPlayer();
         }
         aPieceIsCurrentlySelected = false;
     }
@@ -102,6 +116,10 @@ public class Checkers extends Application {
     private void getPieceToBeMoved( int fromRow, int fromCol ) {
         System.out.println( "Getting piece to move." );
         if ( checkersBoard.getPieceAt( fromRow, fromCol ) != null ) {
+            if ( !checkersBoard.getPieceAt( fromRow, fromCol ).getPieceColor().equalsIgnoreCase( currentPlayer ) )
+                return;
+            previouslyClickedRow = fromRow;
+            previouslyClickedColumn = fromCol;
             pieceToMove = checkersBoard.getPieceAt( fromRow, fromCol );
             aPieceIsCurrentlySelected = true;
         }
