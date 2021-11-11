@@ -28,7 +28,7 @@ public class Checkers extends Application {
 
     private int currentlyClickedRow;
     private int currentlyClickedColumn;
-
+    
     private int previouslyClickedRow;
     private int previouslyClickedColumn;
 
@@ -237,9 +237,11 @@ public class Checkers extends Application {
 
     }
 
+    // ------------------------------------------------------------------------------------------------
+
     private MenuItem createSaveMenuItem() {
         MenuItem save = new MenuItem( "Save" );
-        //save.setOnAction( event -> saveCurrentGameState() );
+        //save.setOnAction( event -> saveCurrentState() );
         return save;
     }
 
@@ -249,11 +251,34 @@ public class Checkers extends Application {
         return load;
     }
 
+    // -------------------------------------------------------------------------------------------------
     private MenuItem createNewGameMenuItem() {
         MenuItem newGame = new MenuItem( "New Game" );
-        //newGame.setOnAction( event -> doNewGame() );
+        newGame.setOnAction( event -> doNewGame() );
         return newGame;
     }
+
+    private void doNewGame() {
+        createNewCheckerBoard();
+        initializeCurrentPlayer();
+        initializeKeyVariables();
+        drawBoard();
+    }
+
+    private void createNewCheckerBoard() {
+        checkersBoard = new CheckersBoard();
+    }
+
+    private void initializeCurrentPlayer() {
+        currentPlayer = RED_PLAYER;
+    }
+
+    private void initializeKeyVariables() {
+        pieceToMove = null;
+        aPieceIsCurrentlySelected = false;
+    }
+
+    // -------------------------------------------------------------------------------------------------
 
     private MenuItem createQuitMenuItem() {
         MenuItem quit = new MenuItem( "Quit" );
