@@ -7,6 +7,7 @@ public class CheckersPiece {
     private int columnOfPiece;
     private String pieceColor;
     private boolean pieceIsKing = false;
+    private String kingType;
 
     public CheckersPiece( int row, int column, String color ) {
         rowOfPiece = row;
@@ -37,6 +38,10 @@ public class CheckersPiece {
 
     public boolean isKing() {
         return pieceIsKing;
+    }
+
+    public String getKingType() {
+        return String.format( "%sKing", pieceColor );
     }
 
 

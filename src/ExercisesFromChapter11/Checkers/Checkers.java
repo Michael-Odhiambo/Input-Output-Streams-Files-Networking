@@ -66,10 +66,8 @@ public class Checkers extends Application {
 
     private void handleMouseClickOnCanvas( MouseEvent event ) {
         setCurrentlyClickedRowAndColumn( event );
-
         if ( aPieceIsCurrentlySelected ) {
             movePieceToToSelectedSquare();
-            aPieceIsCurrentlySelected = false;
         }
         else if ( checkersBoard.getPieceAt( currentlyClickedRow, currentlyClickedColumn ) != null ) {
             getPieceToBeMoved( currentlyClickedRow, currentlyClickedColumn );
@@ -87,8 +85,8 @@ public class Checkers extends Application {
         CheckersMove move = new CheckersMove( pieceToMove.getRow(), pieceToMove.getColumn(), currentlyClickedRow, currentlyClickedColumn );
         if ( selectedPieceCanMove( move ) ) {
             checkersBoard.movePiece( pieceToMove, move );
-
         }
+        aPieceIsCurrentlySelected = false;
     }
 
     private boolean selectedPieceCanMove( CheckersMove moveToMake ) {
@@ -102,16 +100,25 @@ public class Checkers extends Application {
     }
 
     private void getPieceToBeMoved( int fromRow, int fromCol ) {
+        System.out.println( "Getting piece to move." );
         if ( checkersBoard.getPieceAt( fromRow, fromCol ) != null ) {
             pieceToMove = checkersBoard.getPieceAt( fromRow, fromCol );
             aPieceIsCurrentlySelected = true;
         }
+    }
 
+    private void highlightPieceToMove() {
+        System.out.println( "Highlighting piece." );
+        drawingArea.setStroke( Color.RED );
+        drawingArea.setLineWidth( 5 );
+        drawingArea.strokeRect( pieceToMove.getColumn()*80, pieceToMove.getRow()*80, SQUARE_SIZE, SQUARE_SIZE );
     }
 
     private void drawBoard() {
         drawCheckerBoardOnCanvas();
         drawPlayerPiecesOnTheBoard();
+        if ( aPieceIsCurrentlySelected )
+            highlightPieceToMove();
     }
 
     private void drawCheckerBoardOnCanvas() {
