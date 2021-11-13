@@ -46,7 +46,6 @@ public class Checkers extends Application {
     private String RED_PLAYER = "RED";
     private String currentPlayer = RED_PLAYER;
 
-    CheckersBoard newCheckersBoard = new CheckersBoard();
     Document xmlRepresentationOfFileBeingOpened;
 
     private boolean gameIsBeingContinued = false;
@@ -57,11 +56,14 @@ public class Checkers extends Application {
 
     private CheckersBoard checkersBoard = new CheckersBoard();
 
+    private CheckersLogger checkersLogger = new CheckersLogger( "CheckersLog.txt" );
+
     public static void main( String[] args ) {
         launch( args );
     }
 
     public void start( Stage stage ) {
+        checkersLogger.log( "The game has been started." );
         setUpMainWindow( stage );
         setUpMainWindowComponents();
         showMainWindow();
@@ -151,7 +153,7 @@ public class Checkers extends Application {
     }
 
     private void getPieceToBeMoved( int fromRow, int fromCol ) {
-        System.out.println( "Getting piece to move." );
+        checkersLogger.log( "Getting piece to move." );
         if ( checkersBoard.getPieceAt( fromRow, fromCol ) != null ) {
             if ( !checkersBoard.getPieceAt( fromRow, fromCol ).getPieceColor().equalsIgnoreCase( currentPlayer ) )
                 return;
@@ -163,7 +165,7 @@ public class Checkers extends Application {
     }
 
     private void highlightPieceToMove() {
-        System.out.println( "Highlighting piece." );
+        checkersLogger.log( "Highlighting piece." );
         drawingArea.setStroke( Color.RED );
         drawingArea.setLineWidth( 5 );
         drawingArea.strokeRect( pieceToMove.getColumn()*80, pieceToMove.getRow()*80, SQUARE_SIZE, SQUARE_SIZE );
@@ -397,7 +399,7 @@ public class Checkers extends Application {
             drawBoard();
         }
         catch ( Exception e ) {
-            System.out.println( e );
+            checkersLogger.log( e.toString() );
             Alert errorAlert = new Alert( Alert.AlertType.ERROR, String.format("%s", e) );
             errorAlert.showAndWait();
             return;
@@ -417,11 +419,11 @@ public class Checkers extends Application {
             Document xmlDocument;
             DocumentBuilder docReader = DocumentBuilderFactory.newInstance().newDocumentBuilder();
             xmlDocument = docReader.parse( selectedFile );
-            System.out.println( "xml tree successfully created." );
+            checkersLogger.log( "xml tree successfully created." );
             return xmlDocument;
         }
         catch ( Exception e ) {
-            System.out.println( "create tree " + e );
+            checkersLogger.log( "Error creating tree: " + e );
             throw e;
         }
     }
@@ -429,21 +431,20 @@ public class Checkers extends Application {
     private void checkVersionOfTheFile( Element rootNodeOfTheXMLDocument ) throws Exception {
         if ( !rootNodeOfTheXMLDocument.getNodeName().equals( "Checkers" ) )
             throw new Exception( "File is not a simple paint file." );
-        System.out.println( "version of file passed." );
+        checkersLogger.log( "Version of file passed." );
         checkVersionNumber( rootNodeOfTheXMLDocument );
     }
 
-    private void checkVersionNumber( Element rootNodeOfTheXMLDocument ) throws Exception {
+    private void checkVersionNumber( Element rootNodeOfTheXMLDocument ) {
         try {
             String version = rootNodeOfTheXMLDocument.getAttribute( "version" );
             double versionNumber = Double.parseDouble( version );
             if ( versionNumber > 1.0 )
                 throw new Exception( "File requires a newer version of Paint." );
-            System.out.println( "version number passed." );
+            checkersLogger.log( "Version number passed." );
         }
         catch ( Exception e ) {
-            System.out.println( "version number " + e );
-            throw e;
+            checkersLogger.log( "Error getting version number " + e );
         }
     }
 
@@ -494,26 +495,26 @@ public class Checkers extends Application {
         return piece;
     }
 
-    private int getCurrentlyClickedRow( Element currentlyClickedRowElement ) throws Exception {
+    private int getCurrentlyClickedRow( Element currentlyClickedRowElement ) {
         try {
             int row = Integer.parseInt( currentlyClickedRowElement.getAttribute( "row" ) );
-            System.out.println( "currently clicked row: " + row );
+            checkersLogger.log( "Currently clicked row: " + row );
             return row;
         }
         catch ( Exception e ) {
-            System.out.println( "clicked row " + e );
-            throw new Exception(e);
+            checkersLogger.log( "Error getting currently clicked row: " + e );
+            throw e;
         }
     }
 
     private int getCurrentlyClickedColumn( Element currentlyClickedRowElement ) {
         try {
             int col = Integer.parseInt( currentlyClickedRowElement.getAttribute( "column" ) );
-            System.out.println( "currently clicked col; " + col );
+            checkersLogger.log( "Currently clicked col: " + col );
             return col;
         }
         catch ( Exception e ) {
-            System.out.println( "clicked col " + e );
+            checkersLogger.log( "Error getting currently clicked col: " + e );
             throw e;
         }
     }
@@ -521,23 +522,23 @@ public class Checkers extends Application {
     private int getPreviouslyClickedRow( Element previouslyClickedRowElement ) {
         try {
             int row = Integer.parseInt( previouslyClickedRowElement.getAttribute( "row" ) );
-            System.out.println( "Previously clicked row: " + row );
+            checkersLogger.log( "Previously clicked row: " + row );
             return row;
         }
         catch ( Exception e ) {
-            System.out.println( "pclicked row " + e );
+            checkersLogger.log( "Error getting previously clicked row " + e );
             throw e;
         }
     }
 
-    private int getPreviouslyClickedColumn( Element previouslyClickedRowElement ) throws Exception {
+    private int getPreviouslyClickedColumn( Element previouslyClickedRowElement ) {
         try {
             int column = Integer.parseInt( previouslyClickedRowElement.getAttribute( "column" ) );
-            System.out.println( "Previously clicked column: " + column );
+            checkersLogger.log( "Previously clicked column: " + column );
             return column;
         }
         catch ( Exception e ) {
-            System.out.println( "pclickedCol " + e );
+            checkersLogger.log( "Error getting previously clicked column " + e );
             throw e;
         }
     }
@@ -563,11 +564,11 @@ public class Checkers extends Application {
         try {
             String rowAttribute = rowElement.getAttribute( "row" );
             int row = Integer.parseInt( rowAttribute );
-            System.out.println( row );
+            checkersLogger.log("Gotten row number: " + row );
             return row;
         }
         catch ( Exception e ) {
-            System.out.println( "row number " + e );
+            checkersLogger.log( "Error getting row number " + e );
             throw e;
         }
     }
@@ -576,11 +577,11 @@ public class Checkers extends Application {
         try {
             String columnAttribute = columnElement.getAttribute( "column" );
             int column = Integer.parseInt( columnAttribute );
-            System.out.println( column );
+            checkersLogger.log( "Gotten column number: " + column );
             return column;
         }
         catch ( Exception e ) {
-            System.out.println( "col number " + e );
+            checkersLogger.log( "Error getting column number: " + e );
             throw e;
         }
     }
@@ -588,11 +589,11 @@ public class Checkers extends Application {
     private String getPieceColor( Element colorElement ) {
         try {
             String color = colorElement.getAttribute( "color" );
-            System.out.println( "gotten color: " + color );
+            checkersLogger.log( "Gotten color: " + color );
             return color;
         }
         catch ( Exception e ) {
-            System.out.println( "piece color " + e );
+            checkersLogger.log( "Error getting piece color " + e );
             throw e;
         }
     }
@@ -605,7 +606,7 @@ public class Checkers extends Application {
             return false;
         }
         catch ( Exception e ) {
-            System.out.println( "king property " + e );
+            checkersLogger.log( "Error getting king property " + e );
             throw e;
         }
     }

@@ -1,0 +1,2 @@
+Nov 13, 2021 1:52:11 PM Logging.ProgrammaticConfigurationExample main
+INFO: My logger is working.

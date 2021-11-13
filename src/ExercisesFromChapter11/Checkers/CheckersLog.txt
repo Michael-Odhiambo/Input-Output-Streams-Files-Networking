@@ -1,0 +1,45 @@
+Nov 13, 2021 2:14:01 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: The game has been started.
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: xml tree successfully created.
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Version of file passed.
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Version number passed.
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Currently clicked row: 7
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Currently clicked col: 1
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Previously clicked row: 7
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Previously clicked column: 1
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten row number: 0
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten column number: 0
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten color: red
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten row number: 0
+Added piece color:  red
+Row of piece: 0
+Column of piece: 0
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten column number: 6
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten color: blue
+Added piece color:  blue
+Row of piece: 0
+Column of piece: 6
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten row number: 7
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten column number: 1
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Gotten color: red
+Added piece color:  red
+Row of piece: 7
+Column of piece: 1
+Nov 13, 2021 2:14:21 PM ExercisesFromChapter11.Checkers.CheckersLogger log
+INFO: Highlighting piece.
