@@ -331,8 +331,8 @@ public class Checkers extends Application {
         writeElement( streamToOutputFile, String.format( "<PreviouslyClickedColumn column = '" + previouslyClickedColumn + "' />" ), 8 );
         writeElement( streamToOutputFile, String.format( "<CurrentPlayer player = '" + currentPlayer + "' />" ), 8 );
         writePieces( streamToOutputFile );
+        writeElement( streamToOutputFile, String.format( "<PieceCurrentlySelected>%s</PieceCurrentlySelected>", aPieceIsCurrentlySelected ), 8 );
         writeElement( streamToOutputFile, "</Checkers>", 4 );
-
     }
 
     private PrintWriter createStreamForWritingToFile ( File selectedFile ) throws IOException {
@@ -359,7 +359,7 @@ public class Checkers extends Application {
                     writeElement( out, String.format( "<Piece>"), 12 );
                     writeElement( out, String.format( "<PieceRow row='" + piece.getRow() + "'/>"), 16 );
                     writeElement( out, String.format( "<PieceColumn column='" + piece.getColumn() + "'/>"), 16 );
-                    writeElement( out, String.format( "<King> %s </King>", piece.isKing() ), 16 );
+                    writeElement( out, String.format( "<King>%s</King>", piece.isKing() ), 16 );
                     writeElement( out, String.format( "<PieceColor color='" + piece.getPieceColor() + "'/>" ), 16 );
                     writeElement( out, String.format( "</Piece>" ), 12 );
                 }
@@ -390,9 +390,9 @@ public class Checkers extends Application {
     }
 
     private void openFileWhileCheckingErrors( File selectedFile ) {
-        if ( selectedFile == null )
-            return;  // User has not selected a file.
         try {
+            if ( selectedFile == null )
+                return;  // User has not selected a file.
             openFile( selectedFile );
             drawBoard();
         }
@@ -405,14 +405,14 @@ public class Checkers extends Application {
     }
 
     private void openFile( File selectedFile ) throws Exception {
+        checkersBoard.removeAllPieces();
         xmlRepresentationOfFileBeingOpened = createTreeRepresentationOfTheXMLFile( selectedFile );
         checkVersionOfTheFile( xmlRepresentationOfFileBeingOpened.getDocumentElement() );
         processChildNodes( xmlRepresentationOfFileBeingOpened.getDocumentElement().getChildNodes() );
         setFileBeingEdited( selectedFile );
-        checkersBoard = newCheckersBoard;
     }
 
-    private Document createTreeRepresentationOfTheXMLFile(File selectedFile ) throws Exception {
+    private Document createTreeRepresentationOfTheXMLFile( File selectedFile ) throws Exception {
         try {
             Document xmlDocument;
             DocumentBuilder docReader = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -464,9 +464,19 @@ public class Checkers extends Application {
             previouslyClickedRow = getPreviouslyClickedRow( elementToProcess );
         else if ( elementToProcess.getTagName().equals( "PreviouslyClickedColumn" ) )
             previouslyClickedColumn = getPreviouslyClickedColumn( elementToProcess );
-        else if ( elementToProcess.getTagName().equals( "Piece" ) ) {
-            newCheckersBoard.addPiece( processPiece( elementToProcess ) );
+        else if ( elementToProcess.getTagName().equals( "Piece" ) )
+            checkersBoard.addPiece( processPiece( elementToProcess ) );
+        else if ( elementToProcess.getTagName().equals( "PieceCurrentlySelected" ) )
+            setPieceCurrentlySelected( elementToProcess );
+    }
+
+    private void setPieceCurrentlySelected( Element elementToProcess ) {
+        if ( elementToProcess.getTextContent().equals( "true" ) ) {
+            aPieceIsCurrentlySelected = true;
+            pieceToMove = checkersBoard.getPieceAt( currentlyClickedRow, currentlyClickedColumn );
         }
+        else
+            aPieceIsCurrentlySelected = false;
     }
 
     private CheckersPiece processPiece( Element thePiece ) {

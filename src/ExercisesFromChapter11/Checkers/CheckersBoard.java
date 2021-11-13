@@ -175,4 +175,8 @@ public class CheckersBoard {
         System.out.println( "Column of piece: " + piece.getColumn() );
         checkersBoard[piece.getRow()][piece.getColumn()] = piece;
     }
+
+    public void removeAllPieces() {
+        checkersBoard = new CheckersPiece[8][8];
+    }
 }
